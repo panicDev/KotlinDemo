@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName
  * @project BelajarKotlinMVP.
  */
 enum class Order {
-    @SerializedName("latest") LATEST,
-    @SerializedName("oldest") OLDEST,
-    @SerializedName("popular") POPULAR
+    @SerializedName("latest") latest,
+    @SerializedName("oldest") oldest,
+    @SerializedName("popular") popular
 }

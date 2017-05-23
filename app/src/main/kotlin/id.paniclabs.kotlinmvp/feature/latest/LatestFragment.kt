@@ -1,5 +1,6 @@
 package id.paniclabs.kotlinmvp.feature.latest
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
@@ -16,6 +17,7 @@ import id.paniclabs.kotlinmvp.model.Photo
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.row_data.view.*
 import id.paniclabs.kotlinmvp.App
+import id.paniclabs.kotlinmvp.feature.detail.PhotoDetailActivity
 import javax.inject.Inject
 
 /**
@@ -70,7 +72,18 @@ class LatestFragment: Fragment(),LatestView{
 
 
                 view.setOnClickListener {
-                    showSnack(item.id.toString())
+                    val intent = Intent(context, PhotoDetailActivity::class.java)
+                    val location = IntArray(2)
+
+                    view.card_img.getLocationOnScreen(location)
+                    intent.putExtra("imgUrl", item.urls?.full)
+                    intent.putExtra("left", location[0])
+                    intent.putExtra("top", location[1])
+                    intent.putExtra("height", view.card_img.getHeight())
+                    intent.putExtra("width", view.card_img.getWidth())
+
+                    context.startActivity(intent)
+                    activity.overridePendingTransition(0, 0)
                 }
             }
         }

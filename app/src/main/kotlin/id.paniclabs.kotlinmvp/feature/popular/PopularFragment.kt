@@ -1,5 +1,6 @@
 package id.paniclabs.kotlinmvp.feature.popular
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
@@ -14,10 +15,12 @@ import com.github.ajalt.flexadapter.FlexAdapter
 import com.github.ajalt.flexadapter.register
 import id.paniclabs.kotlinmvp.App
 import id.paniclabs.kotlinmvp.R
+import id.paniclabs.kotlinmvp.feature.detail.PhotoDetailActivity
 import id.paniclabs.kotlinmvp.model.Photo
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.row_data.view.*
 import javax.inject.Inject
+
 
 /**
  * @author ali@pergikuliner
@@ -72,7 +75,18 @@ class PopularFragment : Fragment(),PopularView {
 
 
                 view.setOnClickListener {
-                    showSnack(item.id.toString())
+                    val intent = Intent(context, PhotoDetailActivity::class.java)
+                    val location = IntArray(2)
+
+                    view.card_img.getLocationOnScreen(location)
+                    intent.putExtra("imgUrl", item.urls?.full)
+                    intent.putExtra("left", location[0])
+                    intent.putExtra("top", location[1])
+                    intent.putExtra("height", view.card_img.getHeight())
+                    intent.putExtra("width", view.card_img.getWidth())
+
+                    context.startActivity(intent)
+                    activity.overridePendingTransition(0, 0)
                 }
             }
         }

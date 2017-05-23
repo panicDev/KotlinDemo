@@ -18,35 +18,35 @@ class ApiInteractorImpl
                     val rxSchedulers: Schedulers) : ApiInteractor {
 
     private fun getPhotos(orderBy: Order?): Observable<List<Photo>> {
-        return apiService.getPhotos(1,10,orderBy).subscribeOn(rxSchedulers.io())
+        return apiService.getPhotos(1,20,orderBy).subscribeOn(rxSchedulers.io())
     }
 
     private fun getCuratedPhotos(orderBy: Order?): Observable<List<Photo>> {
-        return apiService.getCuratedPhotos(1, 10, orderBy).subscribeOn(rxSchedulers.io())
+        return apiService.getCuratedPhotos(1, 20, orderBy).subscribeOn(rxSchedulers.io())
     }
 
     override fun getLatestPhotos(): Observable<List<Photo>> {
-        return getPhotos(Order.LATEST)
+        return getPhotos(Order.latest)
     }
 
     override fun getOldestPhotos(): Observable<List<Photo>> {
-        return getPhotos(Order.OLDEST)
+        return getPhotos(Order.oldest)
     }
 
     override fun getPopularPhotos(): Observable<List<Photo>> {
-        return getPhotos(Order.POPULAR)
+        return getPhotos(Order.popular)
     }
 
     override fun getLatestCuratedPhotos(): Observable<List<Photo>> {
-        return getCuratedPhotos(Order.LATEST)
+        return getCuratedPhotos(Order.latest)
     }
 
     override fun getOldestCuratedPhotos(): Observable<List<Photo>> {
-        return getCuratedPhotos(Order.OLDEST)
+        return getCuratedPhotos(Order.oldest)
     }
 
     override fun getPopularCuratedPhotos(): Observable<List<Photo>> {
-        return getCuratedPhotos(Order.POPULAR)
+        return getCuratedPhotos(Order.popular)
     }
 
     override fun getPhoto(id: Int): Observable<Photo> {
