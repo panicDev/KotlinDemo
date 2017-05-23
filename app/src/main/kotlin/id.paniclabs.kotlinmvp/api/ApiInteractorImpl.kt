@@ -1,10 +1,9 @@
 package id.paniclabs.kotlinmvp.api
 
-import id.paniclabs.kotlinmvp.api.response.DataHargaResponse
-import id.paniclabs.kotlinmvp.api.response.DataItem
+import id.paniclabs.kotlinmvp.model.Order
+import id.paniclabs.kotlinmvp.model.Photo
 import id.paniclabs.kotlinmvp.rx.Schedulers
-import io.reactivex.Flowable
-import io.reactivex.Single
+import io.reactivex.Observable
 import javax.inject.Inject
 
 
@@ -18,12 +17,39 @@ class ApiInteractorImpl
 @Inject constructor(val apiService: ApiService,
                     val rxSchedulers: Schedulers) : ApiInteractor {
 
-    /**
-     * Implement Interactor api
-     */
-    override fun ambilDataHarga(month: Int, year: Int): Flowable<DataHargaResponse> {
-        return apiService.listHarga(month,year).subscribeOn(rxSchedulers.io())
+    private fun getPhotos(orderBy: Order?): Observable<List<Photo>> {
+        return apiService.getPhotos(1,10,orderBy).subscribeOn(rxSchedulers.io())
     }
 
+    private fun getCuratedPhotos(orderBy: Order?): Observable<List<Photo>> {
+        return apiService.getCuratedPhotos(1, 10, orderBy).subscribeOn(rxSchedulers.io())
+    }
 
+    override fun getLatestPhotos(): Observable<List<Photo>> {
+        return getPhotos(Order.LATEST)
+    }
+
+    override fun getOldestPhotos(): Observable<List<Photo>> {
+        return getPhotos(Order.OLDEST)
+    }
+
+    override fun getPopularPhotos(): Observable<List<Photo>> {
+        return getPhotos(Order.POPULAR)
+    }
+
+    override fun getLatestCuratedPhotos(): Observable<List<Photo>> {
+        return getCuratedPhotos(Order.LATEST)
+    }
+
+    override fun getOldestCuratedPhotos(): Observable<List<Photo>> {
+        return getCuratedPhotos(Order.OLDEST)
+    }
+
+    override fun getPopularCuratedPhotos(): Observable<List<Photo>> {
+        return getCuratedPhotos(Order.POPULAR)
+    }
+
+    override fun getPhoto(id: Int): Observable<Photo> {
+        return apiService.getPhoto(id).subscribeOn(rxSchedulers.io())
+    }
 }

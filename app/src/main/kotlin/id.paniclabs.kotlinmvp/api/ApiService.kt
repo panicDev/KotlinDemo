@@ -1,8 +1,10 @@
 package id.paniclabs.kotlinmvp.api
 
-import id.paniclabs.kotlinmvp.api.response.DataHargaResponse
-import io.reactivex.Flowable
+import id.paniclabs.kotlinmvp.model.Order
+import id.paniclabs.kotlinmvp.model.Photo
+import io.reactivex.Observable
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 
@@ -14,9 +16,16 @@ import retrofit2.http.Query
  */
 interface ApiService {
 
-    /**
-     * GET Harga kebutuhan pokok nasional
-     */
-    @GET("macros/exec?service=AKfycbxoZDvBSaC2QRdzvoRlFzr6EzDLoimdqewnpeMoGoMFAT2sD3cB")
-    fun listHarga(@Query("bulan") month: Int, @Query("tahun") year: Int) : Flowable<DataHargaResponse>
+    @GET("photos")
+    fun getPhotos(@Query("page") page: Int,
+                  @Query("per_page") perPage: Int,
+                  @Query("order_by") orderBy: Order? = null): Observable<List<Photo>>
+
+    @GET("/photos/curated")
+    fun getCuratedPhotos(@Query("page") page: Int,
+                         @Query("per_page") perPage: Int,
+                         @Query("order_by") orderBy: Order? = null): Observable<List<Photo>>
+
+    @GET("photos/{id}")
+    fun getPhoto(@Path("id") id: Int): Observable<Photo>
 }

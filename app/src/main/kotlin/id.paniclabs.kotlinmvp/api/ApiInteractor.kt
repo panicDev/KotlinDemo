@@ -1,7 +1,7 @@
 package id.paniclabs.kotlinmvp.api
 
-import id.paniclabs.kotlinmvp.api.response.DataHargaResponse
-import io.reactivex.Flowable
+import id.paniclabs.kotlinmvp.model.Photo
+import io.reactivex.Observable
 
 
 /**
@@ -12,5 +12,11 @@ import io.reactivex.Flowable
  */
 interface ApiInteractor {
 
-    fun ambilDataHarga(month: Int, year: Int) : Flowable<DataHargaResponse>
+    fun getPhoto(id:Int)          : Observable<Photo>
+    fun getLatestPhotos()         : Observable<List<Photo>>
+    fun getOldestPhotos()         : Observable<List<Photo>>
+    fun getPopularPhotos()        : Observable<List<Photo>>
+    fun getLatestCuratedPhotos()  : Observable<List<Photo>>
+    fun getOldestCuratedPhotos()  : Observable<List<Photo>>
+    fun getPopularCuratedPhotos() : Observable<List<Photo>>
 }
