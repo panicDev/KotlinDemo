@@ -1,13 +1,12 @@
 package id.paniclabs.kotlinmvp.feature.detail
 
 
-import android.Manifest
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.animation.Animator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
-import android.support.annotation.NonNull
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -18,12 +17,16 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.GlideDrawable
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.orhanobut.logger.Logger
+import com.tbruyelle.rxpermissions2.RxPermissions
+import id.paniclabs.kotlinmvp.App
 import id.paniclabs.kotlinmvp.R
-import id.paniclabs.kotlinmvp.util.DownImageUtil
+import id.paniclabs.kotlinmvp.model.DownloadController
 import id.paniclabs.kotlinmvp.util.DragPhotoView
-import id.paniclabs.kotlinmvp.util.ImageCallback
-import id.paniclabs.kotlinmvp.util.XPermissionUtils
 import kotlinx.android.synthetic.main.activity_drag_photo.*
+import zlc.season.rxdownload2.RxDownload
+import zlc.season.rxdownload2.entity.DownloadEvent
+import zlc.season.rxdownload2.entity.DownloadFlag
 import java.lang.Exception
 
 
@@ -49,6 +52,7 @@ class PhotoDetailActivity : AppCompatActivity(), RequestListener<String, GlideDr
         return false
     }
 
+
     internal var mOriginLeft: Int = 0
     internal var mOriginTop: Int = 0
     internal var mOriginHeight: Int = 0
@@ -62,6 +66,12 @@ class PhotoDetailActivity : AppCompatActivity(), RequestListener<String, GlideDr
     private var mTranslationX: Float = 0.toFloat()
     private var mTranslationY: Float = 0.toFloat()
 
+    private var mRxDownload: RxDownload? = null
+    private var mDownloadController: DownloadController? = null
+
+
+    private var imgUrl: String? = null
+
     @SuppressLint("NewApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,8 +81,13 @@ class PhotoDetailActivity : AppCompatActivity(), RequestListener<String, GlideDr
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             window.statusBarColor = resources.getColor(R.color.colorPrimary)
         }
+        App.get(applicationContext).appComponent.inject(this)
 
-        val imgUrl = intent.getStringExtra("imgUrl")
+        imgUrl = intent.getStringExtra("imgUrl")
+
+        mRxDownload = RxDownload.getInstance(this).defaultSavePath(getString(R.string.app_name))
+        mDownloadController = DownloadController(fabprogress)
+
 
         Glide.with(applicationContext)
                 .load(imgUrl)
@@ -81,19 +96,31 @@ class PhotoDetailActivity : AppCompatActivity(), RequestListener<String, GlideDr
 
         progressfab.setVisibility(GONE)
         fabprogress.setOnClickListener {
-            XPermissionUtils.requestPermissions(this, 1, arrayOf<String>(Manifest.permission
-                    .READ_EXTERNAL_STORAGE, Manifest.permission
-                    .WRITE_EXTERNAL_STORAGE), object : XPermissionUtils.OnPermissionListener {
-                override fun onPermissionGranted() {
+            (mDownloadController as DownloadController).handleClick(object : DownloadController.Callback {
+                override fun pauseDownload() {
+                    snack("Download Paused")
+                }
+
+                override fun install() {
+                    snack("Download compeleted")
+                }
+
+                override fun startDownload() {
                     downloadImage(imgUrl)
                 }
 
-                override fun onPermissionDenied() {
-                    snack("Permissions denide, Please open the permissions")
-                }
             })
-
         }
+
+        mRxDownload?.receiveDownloadStatus(imgUrl)
+                ?.subscribe { downloadEvent ->
+                    if (downloadEvent.flag == DownloadFlag.FAILED) {
+                        val throwable = downloadEvent.error
+                        Logger.e(throwable.localizedMessage)
+                    }
+                    mDownloadController?.setEvent(downloadEvent)
+                    updateProgress(downloadEvent)
+                }
 
         dragphotoview?.setOnTapListener(object : DragPhotoView.OnTapListener{
             override fun onTap(view: DragPhotoView) {
@@ -149,24 +176,33 @@ class PhotoDetailActivity : AppCompatActivity(), RequestListener<String, GlideDr
 
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, @NonNull permissions: Array<String>, @NonNull grantResults: IntArray) {
-        XPermissionUtils.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    override fun onResume() {
+        super.onResume()
+
+    }
+
+    private fun updateProgress(event: DownloadEvent) {
+        val status = event.downloadStatus
+        progressfab.setIndeterminate(status.isChunked)
+        progressfab.setMax(status.totalSize.toInt())
+        progressfab.setProgress(status.downloadSize.toInt())
+
     }
 
     private fun downloadImage(imgUrl: String?) {
-        val mDownImageUtil = DownImageUtil(this)
-        mDownImageUtil.onDownLoad(imgUrl!!,1,"download")
-
-        mDownImageUtil.setImageCallBack(object : ImageCallback {
-            override fun onSuccess(url: String) {
-                snack("Image download completed")
-            }
-
-            override fun onFailed() {
-                snack("Image download failed ")
-            }
-        })
+        RxPermissions.getInstance(this)
+                .request(WRITE_EXTERNAL_STORAGE)
+                .doOnNext { granted ->
+                    if (!granted) {
+                        throw RuntimeException("no permission")
+                    }
+                }
+                .compose<Any>(mRxDownload?.transformService(imgUrl,imgUrl))
+                .subscribe (
+                        { snack("Downloading image...") },
+                        {it -> Logger.e("Error : ${it.localizedMessage}") },
+                        {-> Logger.w("onCompleted") }
+                )
     }
 
     private fun snack(toString: String) {
